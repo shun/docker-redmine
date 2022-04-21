@@ -1,0 +1,80 @@
+x-vars:
+  - &DB_ROOTPASS passw0rd
+  - &DB_PASS passw0rd
+  - &DB_USER redmine
+  - &DB_NAME redmine_production
+  - &DB_PORT 5432
+
+services:
+  redmine:
+    image: kudoshunsuke/redmine:5.0.0
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.redmine
+    #  args:
+    #    http_proxy: ${http_proxy}
+    #    https_proxy: ${http_proxy}
+    environment:
+      TZ: Asia/Tokyo
+      REDMINE_DB_POSTGRES: postgres
+      REDMINE_DB_ENCODING: utf8
+      REDMINE_DB_PORT: *DB_PORT
+      REDMINE_DB_DATABASE: *DB_NAME
+      REDMINE_DB_USERNAME: *DB_USER
+      REDMINE_DB_PASSWORD: *DB_PASS
+      REDMINE_SECRET_KEY_BASE: supersecretkey
+    #command: bash
+    volumes:
+      - plugins:/usr/src/redmine/plugins
+      - files:/usr/src/redmine/files
+    tty: true
+    ports:
+      - "20080:3000"
+    logging:
+      driver: "json-file" # defaults if not specified
+      options:
+        max-size: "1m"
+        max-file: "1"
+
+  postgres:
+    image: kudoshunsuke/postgresql:14.2
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.postgresql
+
+    #restart: always
+    environment:
+      TZ: Asia/Tokyo
+      POSTGRES_PASSWORD: *DB_PASS
+      POSTGRES_USER: *DB_USER
+      POSTGRES_DB: *DB_NAME
+    volumes:
+      - db:/var/lib/postgresql
+    logging:
+      driver: "json-file" # defaults if not specified
+      options:
+        max-size: "1m"
+        max-file: "1"
+
+#  chupa-text-proxy:
+#    #restart: always
+#    image: groonga/chupa-text:proxy
+#    environment:
+#      TZ: Asia/Tokyo
+#
+#  chupa-text:
+#    #restart: always
+#    image: groonga/chupa-text:ubuntu-latest
+#    depends_on:
+#      - chupa-text-proxy
+#    environment:
+#      TZ: Asia/Tokyo
+#      http_proxy: http://chupa-text-proxy:3128/
+#      https_proxy: http://chupa-text-proxy:3128/
+#      RAILS_SERVE_STATIC_FILES: "true"
+
+volumes:
+  db:
+  plugins:
+  files:
+
