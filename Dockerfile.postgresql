@@ -1,13 +1,22 @@
-FROM --platform=linux/x86_64 postgres:14.2-bullseye
+FROM --platform=linux/x86_64 postgres:14.2-bullseye AS tmp
 
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt update \
     && apt install -y \
         curl \
-    && curl -L https://packages.groonga.org/debian/groonga-apt-source-latest-bullseye.deb -o /tmp/groonga-apt-source-latest-bullseye.deb \
+    && curl -L https://packages.groonga.org/debian/groonga-apt-source-latest-bullseye.deb -o /tmp/groonga-apt-source-latest-bullseye.deb
+
+FROM --platform=linux/x86_64 postgres:14.2-bullseye
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+COPY --from=tmp /tmp/groonga-apt-source-latest-bullseye.deb /tmp
+RUN apt update \
+    && apt upgrade -y \
     && apt install -y -V \
         /tmp/groonga-apt-source-latest-bullseye.deb \
         groonga-tokenizer-mecab \
     && rm /tmp/groonga-apt-source-latest-bullseye.deb \
+    && apt clean \
     && rm -rf /var/lib/apt/lists/*
